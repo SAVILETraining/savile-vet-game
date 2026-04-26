@@ -391,82 +391,156 @@
     backface-visibility: hidden;
     -webkit-backface-visibility: hidden;
     display: flex;
+    flex-direction: column;
     align-items: center;
     justify-content: center;
-    padding: 0.6rem;
+    padding: 0.5rem 0.4rem 0.4rem;
     overflow: hidden;
+    gap: 0.2rem;
   }
 
   /* Back face */
   .card-back {
     background: #1c1c1c;
     border: 1px solid rgba(255,255,255,0.1);
-    flex-direction: column;
-    gap: 0.3rem;
   }
   .card-back-pineapple { opacity: 0.3; }
-  .card-back svg { width: 32px; height: 32px; }
+  .card-back svg { width: 28px; height: 28px; }
   .card-back-label {
-    font-size: 0.5rem;
+    font-size: 0.45rem;
     letter-spacing: 2px;
     font-weight: 700;
     color: rgba(255,255,255,0.25);
     text-transform: uppercase;
   }
 
-  /* Front face - term */
+  /* Front face - TERMINOLOGY = magenta */
   .card-front-term {
     background: var(--magenta);
-    border: 1px solid var(--magenta-light);
+    border: 2px solid var(--magenta-light);
     transform: rotateY(180deg);
   }
+  .card-front-term .card-type-label {
+    font-size: 0.4rem;
+    font-weight: 900;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.7);
+    background: rgba(0,0,0,0.25);
+    padding: 2px 5px;
+    border-radius: 3px;
+    flex-shrink: 0;
+  }
   .card-front-term .card-text {
-    font-size: 0.75rem;
+    font-size: 0.65rem;
     font-weight: 700;
     text-align: center;
     color: white;
-    letter-spacing: 0.3px;
-    line-height: 1.3;
+    line-height: 1.25;
     text-transform: uppercase;
   }
 
-  /* Front face - definition */
+  /* Front face - DEFINITION = orange */
   .card-front-def {
-    background: #1e1e1e;
-    border: 1px solid rgba(243,110,33,0.4);
+    background: var(--orange);
+    border: 2px solid var(--yellow);
     transform: rotateY(180deg);
   }
-  .card-front-def .card-text {
-    font-size: 0.65rem;
-    font-weight: 500;
-    text-align: center;
-    color: rgba(255,255,255,0.9);
-    line-height: 1.35;
-  }
-  .card-type-badge {
-    position: absolute;
-    top: 6px; right: 6px;
-    font-size: 0.45rem;
-    font-weight: 700;
+  .card-front-def .card-type-label {
+    font-size: 0.4rem;
+    font-weight: 900;
     letter-spacing: 1.5px;
     text-transform: uppercase;
+    color: rgba(255,255,255,0.7);
+    background: rgba(0,0,0,0.25);
     padding: 2px 5px;
-    border-radius: 4px;
+    border-radius: 3px;
+    flex-shrink: 0;
   }
-  .badge-term { background: rgba(255,255,255,0.2); color: rgba(255,255,255,0.7); }
-  .badge-def { background: rgba(243,110,33,0.2); color: var(--orange); }
+  .card-front-def .card-text {
+    font-size: 0.55rem;
+    font-weight: 500;
+    text-align: center;
+    color: white;
+    line-height: 1.3;
+  }
 
-  /* Matched animation */
-  .card-wrapper.matched .card-face {
-    animation: matchGlow 0.5s ease;
-  }
+  /* Matched */
+  .card-wrapper.matched .card-front-term { background: #2a5a2a; border-color: #4caf50; }
+  .card-wrapper.matched .card-front-def  { background: #1a3a1a; border-color: #4caf50; }
   @keyframes matchGlow {
-    0% { box-shadow: 0 0 0 0 rgba(251,176,66,0.8); }
-    50% { box-shadow: 0 0 20px 8px rgba(251,176,66,0.5); }
+    0%   { box-shadow: 0 0 0 0 rgba(251,176,66,0.8); }
+    50%  { box-shadow: 0 0 20px 8px rgba(251,176,66,0.5); }
     100% { box-shadow: 0 0 0 0 rgba(251,176,66,0); }
   }
-  .card-wrapper.matched .card-front-term { background: #2a5a2a; border-color: #4caf50; }
-  .card-wrapper.matched .card-front-def { background: #1a3a1a; border-color: #4caf50; }
+  .card-wrapper.matched .card-face { animation: matchGlow 0.5s ease; }
+
+  /* ── ZOOM OVERLAY ── */
+  #zoom-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.82);
+    z-index: 9000;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(6px);
+  }
+
+  .zoom-card {
+    width: min(360px, 88vw);
+    border-radius: 20px;
+    padding: 2rem 1.8rem 1.5rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+    animation: zoomIn 0.28s cubic-bezier(0.34,1.56,0.64,1);
+  }
+  @keyframes zoomIn {
+    from { transform: scale(0.6); opacity: 0; }
+    to   { transform: scale(1);   opacity: 1; }
+  }
+  .zoom-card.zoom-term { background: var(--magenta); border: 3px solid var(--magenta-light); }
+  .zoom-card.zoom-def  { background: var(--orange);  border: 3px solid var(--yellow); }
+
+  .zoom-type-label {
+    font-size: 0.65rem;
+    font-weight: 900;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.7);
+    background: rgba(0,0,0,0.25);
+    padding: 4px 12px;
+    border-radius: 4px;
+  }
+  .zoom-text {
+    font-size: 1.15rem;
+    font-weight: 700;
+    text-align: center;
+    color: white;
+    line-height: 1.45;
+  }
+  .zoom-term .zoom-text { text-transform: uppercase; }
+  .zoom-hint {
+    font-size: 0.65rem;
+    color: rgba(255,255,255,0.45);
+    font-weight: 500;
+  }
+  .zoom-timer-bar {
+    width: 100%;
+    height: 5px;
+    background: rgba(255,255,255,0.2);
+    border-radius: 3px;
+    overflow: hidden;
+  }
+  .zoom-timer-fill {
+    height: 100%;
+    width: 100%;
+    background: rgba(255,255,255,0.75);
+    border-radius: 3px;
+    transform-origin: left;
+  }
 
   /* ── FLASH MESSAGE ── */
   .flash {
@@ -684,6 +758,16 @@
     <div class="winner-sub" id="winnerSub"></div>
     <div class="final-scores" id="finalScores"></div>
     <button class="btn-primary" onclick="backToLobby()">Play Again</button>
+  </div>
+</div>
+
+<!-- Zoom overlay -->
+<div id="zoom-overlay">
+  <div class="zoom-card" id="zoom-card">
+    <div class="zoom-type-label" id="zoom-type-label">Terminology</div>
+    <div class="zoom-text" id="zoom-text"></div>
+    <div class="zoom-hint">Reading time — auto-continues</div>
+    <div class="zoom-timer-bar"><div class="zoom-timer-fill" id="zoom-timer-fill"></div></div>
   </div>
 </div>
 
@@ -951,17 +1035,21 @@ function renderGame(state) {
     const inner = document.createElement('div');
     inner.className = 'card-inner';
 
-    // Back
+    // Back — colour coded by type
+    const backColor = card.type === 'term' ? '#6B0D45' : '#7A3010';
+    const backBorder = card.type === 'term' ? '#D21A8A' : '#F36E21';
+    const backLabel = card.type === 'term' ? 'TERMINOLOGY' : 'DEFINITION';
+    const pineColor = card.type === 'term' ? '#D21A8A' : '#F36E21';
     inner.innerHTML = `
-      <div class="card-face card-back">
+      <div class="card-face card-back" style="background:${backColor};border:2px solid ${backBorder};">
         <div class="card-back-pineapple">
           <svg viewBox="0 0 50 60" xmlns="http://www.w3.org/2000/svg">
-            <ellipse cx="25" cy="42" rx="13" ry="16" fill="#D21A8A"/>
-            <path d="M25,26 C23,20 17,16 20,12 C23,16 25,22 25,26Z" fill="#D21A8A"/>
-            <path d="M25,26 C27,20 33,16 30,12 C27,16 25,22 25,26Z" fill="#D21A8A"/>
+            <ellipse cx="25" cy="42" rx="13" ry="16" fill="${pineColor}"/>
+            <path d="M25,26 C23,20 17,16 20,12 C23,16 25,22 25,26Z" fill="${pineColor}"/>
+            <path d="M25,26 C27,20 33,16 30,12 C27,16 25,22 25,26Z" fill="${pineColor}"/>
           </svg>
         </div>
-        <div class="card-back-label">VET</div>
+        <div class="card-back-label" style="color:${backBorder};opacity:1;">${backLabel}</div>
       </div>
     `;
 
@@ -969,7 +1057,7 @@ function renderGame(state) {
     const front = document.createElement('div');
     front.className = 'card-face ' + (card.type === 'term' ? 'card-front-term' : 'card-front-def');
     front.innerHTML = `
-      <span class="card-type-badge ${card.type === 'term' ? 'badge-term' : 'badge-def'}">${card.type === 'term' ? 'TERM' : 'DEF'}</span>
+      <div class="card-type-label">${card.type === 'term' ? 'TERMINOLOGY' : 'DEFINITION'}</div>
       <div class="card-text">${card.content}</div>
     `;
     inner.appendChild(front);
@@ -978,34 +1066,74 @@ function renderGame(state) {
   });
 }
 
+// ── ZOOM OVERLAY ──
+const ZOOM_DURATION = 4000;
+let zoomTimeout = null;
+
+function showZoom(cardType, cardContent, callback) {
+  const overlay = document.getElementById('zoom-overlay');
+  const zoomCard = document.getElementById('zoom-card');
+  const zoomText = document.getElementById('zoom-text');
+  const zoomLabel = document.getElementById('zoom-type-label');
+  const fill = document.getElementById('zoom-timer-fill');
+
+  // Clear any existing zoom
+  if (zoomTimeout) { clearTimeout(zoomTimeout); zoomTimeout = null; }
+
+  zoomLabel.textContent = cardType === 'term' ? 'Terminology' : 'Definition';
+  zoomText.textContent = cardContent;
+  zoomCard.className = 'zoom-card ' + (cardType === 'term' ? 'zoom-term' : 'zoom-def');
+
+  fill.style.transition = 'none';
+  fill.style.width = '100%';
+  overlay.style.display = 'flex';
+
+  // Force reflow then start drain animation
+  void fill.offsetWidth;
+  fill.style.transition = 'width ' + ZOOM_DURATION + 'ms linear';
+  fill.style.width = '0%';
+
+  zoomTimeout = setTimeout(() => {
+    overlay.style.display = 'none';
+    zoomTimeout = null;
+    if (callback) callback();
+  }, ZOOM_DURATION);
+}
+
 // ── FLIP CARD ──
+// We track flips locally to avoid Firebase re-renders breaking zoom timing
+let localFlipped = {}; // { cardId: {type, content, pairId} }
+
 function flipCard(cardId, pairId, state) {
   if (state.currentTurn !== myId) return;
-  const flipped = state.flipped || {};
-  if (flipped[cardId]) return;
+  const firebaseFlipped = state.flipped || {};
+  if (firebaseFlipped[cardId]) return;
+  if (Object.keys(localFlipped).length >= 2) return;
+  if (isChecking) return;
 
-  const alreadyFlipped = Object.keys(flipped);
-  if (alreadyFlipped.length >= 2) return;
+  const cardData = state.cards.find(c => c.id === cardId);
+  if (!cardData) return;
 
+  // Write to Firebase so all players see the flip
   roomRef.child('flipped').child(cardId).set(true);
 
-  const newFlipped = { ...flipped, [cardId]: true };
-  const flippedKeys = Object.keys(newFlipped);
+  // Track locally
+  localFlipped[cardId] = cardData;
 
-  if (flippedKeys.length === 2) {
-    isChecking = true;
-    const cards = state.cards;
-    const card1 = cards.find(c => c.id === flippedKeys[0]);
-    const card2 = cards.find(c => c.id === flippedKeys[1]);
+  // Show zoom for this card
+  showZoom(cardData.type, cardData.content, () => {
+    const flippedIds = Object.keys(localFlipped);
 
-    if (card1.pairId === card2.pairId && card1.type !== card2.type) {
-      // Match!
-      setTimeout(() => {
+    if (flippedIds.length === 2) {
+      isChecking = true;
+      const card1 = localFlipped[flippedIds[0]];
+      const card2 = localFlipped[flippedIds[1]];
+
+      if (card1.pairId === card2.pairId && card1.type !== card2.type) {
+        // Match!
         const newMatched = [...(state.matched || []), card1.pairId];
-        const players = state.players || {};
-        const myPairs = (players[myId]?.pairs || 0) + 1;
-
-        // Next turn = stay (got a match!)
+        const myPairs = (state.players[myId]?.pairs || 0) + 1;
+        localFlipped = {};
         roomRef.update({
           matched: newMatched,
           flipped: {},
@@ -1015,25 +1143,24 @@ function flipCard(cardId, pairId, state) {
         });
         showFlash('Match! +1 pair 🎉', '#F36E21');
         isChecking = false;
-      }, 900);
-    } else {
-      // No match — flip back, next turn
-      setTimeout(() => {
-        const playerIds = Object.keys(state.players || {});
-        const idx = playerIds.indexOf(state.currentTurn);
-        const nextIdx = (idx + 1) % playerIds.length;
-        const nextTurn = playerIds[nextIdx];
-
-        roomRef.update({
-          flipped: {},
-          currentTurn: nextTurn,
-          timeLeft: 60,
-          turnStart: Date.now()
+      } else {
+        // No match — show second card zoomed then flip back after 4s
+        showZoom(card2.type, card2.content, () => {
+          localFlipped = {};
+          const playerIds = Object.keys(state.players || {});
+          const idx = playerIds.indexOf(state.currentTurn);
+          const nextTurn = playerIds[(idx + 1) % playerIds.length];
+          roomRef.update({
+            flipped: {},
+            currentTurn: nextTurn,
+            timeLeft: 60,
+            turnStart: Date.now()
+          });
+          isChecking = false;
         });
-        isChecking = false;
-      }, 1100);
+      }
     }
-  }
+  });
 }
 
 // ── TIMER ──
