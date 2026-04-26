@@ -1026,9 +1026,12 @@ function renderGame(state) {
     wrapper.dataset.id = card.id;
     wrapper.dataset.pairid = card.pairId;
 
-    if (!isFlipped && !isMatched && isMyTurn && !isChecking) {
+    // Always attach onclick if it's my turn and card isn't already flipped/matched.
+    // isChecking and localFlipped are guarded inside flipCard at click-time,
+    // so a successful match immediately allows picking the next card.
+    if (!isFlipped && !isMatched && isMyTurn) {
       wrapper.onclick = () => flipCard(card.id, card.pairId, state);
-    } else {
+    } else if (!isMyTurn || isMatched) {
       wrapper.classList.add('locked');
     }
 
@@ -1130,10 +1133,11 @@ function flipCard(cardId, pairId, state) {
       const card2 = localFlipped[flippedIds[1]];
 
       if (card1.pairId === card2.pairId && card1.type !== card2.type) {
-        // Match!
+        // Match! Reset immediately so player can pick again without waiting
+        localFlipped = {};
+        isChecking = false;
         const newMatched = [...(state.matched || []), card1.pairId];
         const myPairs = (state.players[myId]?.pairs || 0) + 1;
-        localFlipped = {};
         roomRef.update({
           matched: newMatched,
           flipped: {},
@@ -1141,8 +1145,7 @@ function flipCard(cardId, pairId, state) {
           timeLeft: 60,
           turnStart: Date.now()
         });
-        showFlash('Match! +1 pair 🎉', '#F36E21');
-        isChecking = false;
+        showFlash('Match! Pick again! 🎉', '#F36E21');
       } else {
         // No match — show second card zoomed then flip back after 4s
         showZoom(card2.type, card2.content, () => {
