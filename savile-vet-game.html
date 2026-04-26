@@ -1,0 +1,1100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Savile VET Memory Match</title>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;700;900&display=swap" rel="stylesheet">
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<style>
+  :root {
+    --magenta: #D21A8A;
+    --magenta-light: #E359A1;
+    --magenta-dark: #AF2D65;
+    --orange: #F36E21;
+    --yellow: #FBB042;
+    --yellow-dark: #F79524;
+    --black: #0a0a0a;
+    --white: #ffffff;
+    --card-back: #1a1a1a;
+    --card-front-term: #D21A8A;
+    --card-front-def: #1a1a1a;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Montserrat', sans-serif;
+    background: var(--black);
+    color: var(--white);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ── LOBBY ── */
+  #lobby {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 2rem;
+    position: relative;
+  }
+
+  .bg-blob {
+    position: fixed;
+    border-radius: 50%;
+    filter: blur(80px);
+    opacity: 0.18;
+    pointer-events: none;
+    z-index: 0;
+  }
+  .blob1 { width: 500px; height: 500px; background: var(--magenta); top: -100px; left: -150px; }
+  .blob2 { width: 400px; height: 400px; background: var(--orange); bottom: -100px; right: -100px; }
+
+  .lobby-card {
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 24px;
+    padding: 3rem 2.5rem;
+    width: 100%;
+    max-width: 480px;
+    position: relative;
+    z-index: 1;
+    backdrop-filter: blur(10px);
+  }
+
+  /* SVG Pineapple Logo */
+  .logo-wrap {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 1.5rem;
+  }
+  .logo-svg { width: 90px; height: 90px; }
+
+  .lobby-title {
+    font-size: 1.9rem;
+    font-weight: 900;
+    text-align: center;
+    letter-spacing: -0.5px;
+    line-height: 1.1;
+    margin-bottom: 0.4rem;
+  }
+  .lobby-title span { color: var(--magenta); }
+
+  .lobby-sub {
+    text-align: center;
+    font-size: 0.8rem;
+    color: rgba(255,255,255,0.45);
+    font-weight: 500;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 2.5rem;
+  }
+
+  .input-group { margin-bottom: 1rem; }
+  .input-group label {
+    display: block;
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.5);
+    margin-bottom: 0.5rem;
+  }
+  .input-group input, .input-group select {
+    width: 100%;
+    background: rgba(255,255,255,0.07);
+    border: 1px solid rgba(255,255,255,0.15);
+    border-radius: 10px;
+    padding: 0.85rem 1rem;
+    color: var(--white);
+    font-family: 'Montserrat', sans-serif;
+    font-size: 0.95rem;
+    font-weight: 500;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  .input-group input:focus, .input-group select:focus {
+    border-color: var(--magenta);
+  }
+  .input-group select option { background: #1a1a1a; }
+
+  .btn-primary {
+    width: 100%;
+    padding: 1rem;
+    background: linear-gradient(135deg, var(--magenta), var(--magenta-dark));
+    border: none;
+    border-radius: 12px;
+    color: var(--white);
+    font-family: 'Montserrat', sans-serif;
+    font-size: 1rem;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    cursor: pointer;
+    margin-top: 0.5rem;
+    transition: transform 0.15s, box-shadow 0.15s;
+  }
+  .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(210,26,138,0.4); }
+  .btn-primary:active { transform: translateY(0); }
+
+  .btn-secondary {
+    width: 100%;
+    padding: 0.9rem;
+    background: transparent;
+    border: 1px solid rgba(255,255,255,0.2);
+    border-radius: 12px;
+    color: rgba(255,255,255,0.7);
+    font-family: 'Montserrat', sans-serif;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    margin-top: 0.6rem;
+    transition: border-color 0.2s, color 0.2s;
+  }
+  .btn-secondary:hover { border-color: var(--orange); color: var(--orange); }
+
+  .divider {
+    text-align: center;
+    color: rgba(255,255,255,0.25);
+    font-size: 0.75rem;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin: 1.2rem 0;
+    position: relative;
+  }
+  .divider::before, .divider::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    width: 38%;
+    height: 1px;
+    background: rgba(255,255,255,0.1);
+  }
+  .divider::before { left: 0; }
+  .divider::after { right: 0; }
+
+  /* ── WAITING ROOM ── */
+  #waiting {
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 2rem;
+    position: relative;
+  }
+
+  .waiting-card {
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 24px;
+    padding: 2.5rem;
+    width: 100%;
+    max-width: 540px;
+    text-align: center;
+    position: relative;
+    z-index: 1;
+  }
+
+  .room-code-display {
+    font-size: 3.5rem;
+    font-weight: 900;
+    letter-spacing: 8px;
+    color: var(--orange);
+    margin: 0.5rem 0 1.5rem;
+  }
+
+  .players-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.6rem;
+    justify-content: center;
+    margin: 1.2rem 0;
+    min-height: 48px;
+  }
+
+  .player-chip {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: rgba(255,255,255,0.07);
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 50px;
+    padding: 0.4rem 1rem;
+    font-size: 0.85rem;
+    font-weight: 600;
+    animation: popIn 0.3s ease;
+  }
+  .player-chip.host { border-color: var(--magenta); color: var(--magenta); }
+  .player-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--yellow);
+    animation: pulse 1.5s infinite;
+  }
+
+  @keyframes popIn {
+    from { transform: scale(0.7); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+  }
+
+  .qr-section {
+    margin: 1.5rem 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.6rem;
+  }
+  .qr-label {
+    font-size: 0.7rem;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.4);
+    font-weight: 700;
+  }
+  #qrcode {
+    background: white;
+    padding: 10px;
+    border-radius: 12px;
+    display: inline-block;
+  }
+  .game-url {
+    font-size: 0.75rem;
+    color: var(--orange);
+    word-break: break-all;
+    max-width: 320px;
+  }
+
+  /* ── GAME ── */
+  #game { display: none; flex-direction: column; min-height: 100vh; }
+
+  .game-header {
+    background: rgba(0,0,0,0.6);
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+    padding: 0.8rem 1.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+
+  .header-logo { display: flex; align-items: center; gap: 0.6rem; }
+  .header-logo svg { width: 36px; height: 36px; }
+  .header-logo span {
+    font-size: 1rem;
+    font-weight: 900;
+    letter-spacing: 1px;
+    color: var(--white);
+  }
+
+  .turn-banner {
+    background: linear-gradient(135deg, var(--magenta), var(--orange));
+    border-radius: 50px;
+    padding: 0.4rem 1.2rem;
+    font-size: 0.8rem;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    text-align: center;
+    flex: 1;
+    margin: 0 1rem;
+  }
+
+  .timer-display {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--yellow);
+    min-width: 40px;
+    text-align: right;
+  }
+  .timer-display.urgent { color: #ff4444; animation: blink 0.5s infinite; }
+  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
+
+  /* Scoreboard */
+  .scoreboard {
+    display: flex;
+    gap: 0.5rem;
+    padding: 0.8rem 1.5rem;
+    overflow-x: auto;
+    background: rgba(0,0,0,0.3);
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+  }
+  .score-card {
+    flex: 0 0 auto;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 10px;
+    padding: 0.5rem 1rem;
+    text-align: center;
+    min-width: 90px;
+    transition: all 0.3s;
+  }
+  .score-card.active-player {
+    border-color: var(--magenta);
+    background: rgba(210,26,138,0.15);
+    transform: scale(1.05);
+  }
+  .score-card.my-card { border-color: var(--orange); }
+  .score-name { font-size: 0.7rem; font-weight: 700; color: rgba(255,255,255,0.6); letter-spacing: 1px; text-transform: uppercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 80px; }
+  .score-num { font-size: 1.6rem; font-weight: 900; color: var(--white); line-height: 1; }
+  .score-pairs { font-size: 0.65rem; color: rgba(255,255,255,0.4); }
+
+  /* Card Grid */
+  .card-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0.7rem;
+    padding: 1.2rem;
+    flex: 1;
+    align-content: center;
+    max-width: 900px;
+    margin: 0 auto;
+    width: 100%;
+  }
+
+  @media (max-width: 600px) {
+    .card-grid { grid-template-columns: repeat(3, 1fr); gap: 0.5rem; padding: 0.7rem; }
+  }
+
+  /* Memory Card */
+  .card-wrapper {
+    perspective: 1000px;
+    aspect-ratio: 3/4;
+    cursor: pointer;
+  }
+  .card-wrapper.locked { cursor: default; }
+
+  .card-inner {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    transition: transform 0.55s cubic-bezier(0.4, 0, 0.2, 1);
+    transform-style: preserve-3d;
+  }
+  .card-wrapper.flipped .card-inner { transform: rotateY(180deg); }
+  .card-wrapper.matched .card-inner { transform: rotateY(180deg); }
+
+  .card-face {
+    position: absolute;
+    inset: 0;
+    border-radius: 12px;
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.6rem;
+    overflow: hidden;
+  }
+
+  /* Back face */
+  .card-back {
+    background: #1c1c1c;
+    border: 1px solid rgba(255,255,255,0.1);
+    flex-direction: column;
+    gap: 0.3rem;
+  }
+  .card-back-pineapple { opacity: 0.3; }
+  .card-back svg { width: 32px; height: 32px; }
+  .card-back-label {
+    font-size: 0.5rem;
+    letter-spacing: 2px;
+    font-weight: 700;
+    color: rgba(255,255,255,0.25);
+    text-transform: uppercase;
+  }
+
+  /* Front face - term */
+  .card-front-term {
+    background: var(--magenta);
+    border: 1px solid var(--magenta-light);
+    transform: rotateY(180deg);
+  }
+  .card-front-term .card-text {
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-align: center;
+    color: white;
+    letter-spacing: 0.3px;
+    line-height: 1.3;
+    text-transform: uppercase;
+  }
+
+  /* Front face - definition */
+  .card-front-def {
+    background: #1e1e1e;
+    border: 1px solid rgba(243,110,33,0.4);
+    transform: rotateY(180deg);
+  }
+  .card-front-def .card-text {
+    font-size: 0.65rem;
+    font-weight: 500;
+    text-align: center;
+    color: rgba(255,255,255,0.9);
+    line-height: 1.35;
+  }
+  .card-type-badge {
+    position: absolute;
+    top: 6px; right: 6px;
+    font-size: 0.45rem;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    padding: 2px 5px;
+    border-radius: 4px;
+  }
+  .badge-term { background: rgba(255,255,255,0.2); color: rgba(255,255,255,0.7); }
+  .badge-def { background: rgba(243,110,33,0.2); color: var(--orange); }
+
+  /* Matched animation */
+  .card-wrapper.matched .card-face {
+    animation: matchGlow 0.5s ease;
+  }
+  @keyframes matchGlow {
+    0% { box-shadow: 0 0 0 0 rgba(251,176,66,0.8); }
+    50% { box-shadow: 0 0 20px 8px rgba(251,176,66,0.5); }
+    100% { box-shadow: 0 0 0 0 rgba(251,176,66,0); }
+  }
+  .card-wrapper.matched .card-front-term { background: #2a5a2a; border-color: #4caf50; }
+  .card-wrapper.matched .card-front-def { background: #1a3a1a; border-color: #4caf50; }
+
+  /* ── FLASH MESSAGE ── */
+  .flash {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%,-50%) scale(0.8);
+    background: var(--magenta);
+    color: white;
+    font-size: 1.4rem;
+    font-weight: 900;
+    padding: 1.2rem 2.5rem;
+    border-radius: 16px;
+    z-index: 9999;
+    opacity: 0;
+    pointer-events: none;
+    letter-spacing: 1px;
+    text-align: center;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+    transition: opacity 0.2s, transform 0.2s;
+  }
+  .flash.show {
+    opacity: 1;
+    transform: translate(-50%,-50%) scale(1);
+  }
+
+  /* ── WINNER SCREEN ── */
+  #winner {
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 2rem;
+    text-align: center;
+    position: relative;
+  }
+  .winner-content { position: relative; z-index: 1; max-width: 480px; }
+  .trophy { font-size: 5rem; margin-bottom: 1rem; animation: float 2s ease-in-out infinite; }
+  @keyframes float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-12px)} }
+  .winner-title { font-size: 1rem; font-weight: 700; letter-spacing: 3px; text-transform: uppercase; color: var(--yellow); margin-bottom: 0.5rem; }
+  .winner-name { font-size: 3rem; font-weight: 900; line-height: 1; margin-bottom: 0.3rem; }
+  .winner-sub { color: rgba(255,255,255,0.5); font-size: 0.9rem; margin-bottom: 2rem; }
+
+  .final-scores {
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 16px;
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+    width: 100%;
+  }
+  .final-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.5rem 0;
+    border-bottom: 1px solid rgba(255,255,255,0.07);
+    font-size: 0.9rem;
+  }
+  .final-row:last-child { border-bottom: none; }
+  .final-rank { color: var(--yellow); font-weight: 900; width: 28px; }
+  .final-name { flex: 1; text-align: left; font-weight: 600; }
+  .final-pts { font-weight: 700; color: var(--orange); }
+
+  /* status text */
+  .status-text {
+    text-align: center;
+    padding: 1.5rem;
+    color: rgba(255,255,255,0.4);
+    font-size: 0.85rem;
+    font-style: italic;
+  }
+
+  /* Loading */
+  .spinner {
+    width: 32px; height: 32px;
+    border: 3px solid rgba(255,255,255,0.1);
+    border-top-color: var(--magenta);
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+    margin: 0 auto 1rem;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+</style>
+</head>
+<body>
+
+<div class="bg-blob blob1"></div>
+<div class="bg-blob blob2"></div>
+
+<!-- ═══════════════ LOBBY ═══════════════ -->
+<div id="lobby">
+  <div class="lobby-card">
+    <div class="logo-wrap">
+      <!-- Savile Pineapple SVG -->
+      <svg class="logo-svg" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="50" cy="58" r="34" fill="#D21A8A"/>
+        <circle cx="50" cy="58" r="28" fill="white" opacity="0.15"/>
+        <!-- pineapple body simplified -->
+        <g transform="translate(50,62)" fill="white">
+          <ellipse rx="13" ry="17" ry="16"/>
+          <!-- grid lines -->
+          <line x1="-13" y1="-5" x2="13" y2="-5" stroke="#D21A8A" stroke-width="1"/>
+          <line x1="-13" y1="0" x2="13" y2="0" stroke="#D21A8A" stroke-width="1"/>
+          <line x1="-13" y1="5" x2="13" y2="5" stroke="#D21A8A" stroke-width="1"/>
+          <line x1="-13" y1="10" x2="13" y2="10" stroke="#D21A8A" stroke-width="1"/>
+          <line x1="-6" y1="-16" x2="-6" y2="16" stroke="#D21A8A" stroke-width="1"/>
+          <line x1="0" y1="-16" x2="0" y2="16" stroke="#D21A8A" stroke-width="1"/>
+          <line x1="6" y1="-16" x2="6" y2="16" stroke="#D21A8A" stroke-width="1"/>
+          <!-- leaves -->
+          <path d="M0,-16 C-2,-22 -8,-26 -5,-30 C-2,-26 0,-20 0,-16Z" fill="white"/>
+          <path d="M0,-16 C2,-22 8,-26 5,-30 C2,-26 0,-20 0,-16Z" fill="white"/>
+          <path d="M0,-16 C-5,-20 -12,-20 -10,-24 C-6,-22 -2,-18 0,-16Z" fill="rgba(255,255,255,0.7)"/>
+          <path d="M0,-16 C5,-20 12,-20 10,-24 C6,-22 2,-18 0,-16Z" fill="rgba(255,255,255,0.7)"/>
+        </g>
+        <!-- ring -->
+        <circle cx="50" cy="58" r="34" fill="none" stroke="#F36E21" stroke-width="2.5"/>
+        <circle cx="50" cy="58" r="38" fill="none" stroke="#F36E21" stroke-width="1" opacity="0.5"/>
+        <!-- SAVILE text arc (simplified) -->
+        <text font-family="Montserrat, sans-serif" font-weight="900" font-size="9" fill="white" letter-spacing="5">
+          <textPath href="#arc" startOffset="18%">SAVILE</textPath>
+        </text>
+        <defs>
+          <path id="arc" d="M 15,58 A 35,35 0 0,1 85,58"/>
+        </defs>
+      </svg>
+    </div>
+
+    <h1 class="lobby-title">VET Memory <span>Match</span></h1>
+    <p class="lobby-sub">Savile RTO · Multiplayer</p>
+
+    <div class="input-group">
+      <label>Your Name</label>
+      <input type="text" id="playerName" placeholder="Enter your name" maxlength="20"/>
+    </div>
+
+    <button class="btn-primary" onclick="createRoom()">Create New Game Room</button>
+
+    <div class="divider">or join existing</div>
+
+    <div class="input-group">
+      <label>Room Code</label>
+      <input type="text" id="joinCode" placeholder="Enter 4-letter code" maxlength="4" style="text-transform:uppercase;letter-spacing:4px;font-size:1.1rem;text-align:center"/>
+    </div>
+    <button class="btn-secondary" onclick="joinRoom()">Join Room</button>
+  </div>
+</div>
+
+<!-- ═══════════════ WAITING ROOM ═══════════════ -->
+<div id="waiting">
+  <div class="waiting-card">
+    <div class="logo-wrap" style="margin-bottom:0.8rem">
+      <svg style="width:50px;height:50px" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="50" cy="58" r="34" fill="#D21A8A"/>
+        <g transform="translate(50,62)" fill="white">
+          <ellipse rx="13" ry="16"/>
+          <path d="M0,-16 C-2,-22 -8,-26 -5,-30 C-2,-26 0,-20 0,-16Z" fill="white"/>
+          <path d="M0,-16 C2,-22 8,-26 5,-30 C2,-26 0,-20 0,-16Z" fill="white"/>
+        </g>
+        <circle cx="50" cy="58" r="34" fill="none" stroke="#F36E21" stroke-width="2.5"/>
+      </svg>
+    </div>
+
+    <p style="font-size:0.7rem;letter-spacing:3px;color:rgba(255,255,255,0.4);font-weight:700;text-transform:uppercase;margin-bottom:0.3rem">Room Code</p>
+    <div class="room-code-display" id="displayCode">----</div>
+
+    <p style="font-size:0.75rem;color:rgba(255,255,255,0.5);margin-bottom:0.8rem">Share this code or scan the QR — others join from any device</p>
+
+    <div class="qr-section">
+      <div class="qr-label">Scan to join</div>
+      <div id="qrcode"></div>
+      <div class="game-url" id="gameUrl"></div>
+    </div>
+
+    <p style="font-size:0.8rem;font-weight:700;color:rgba(255,255,255,0.6);margin:1rem 0 0.5rem">Players joined:</p>
+    <div class="players-list" id="playersList"></div>
+
+    <div id="waitStatus" class="status-text">Waiting for players... (minimum 2 to start)</div>
+    <button class="btn-primary" id="startBtn" style="display:none" onclick="startGame()">Start Game!</button>
+  </div>
+</div>
+
+<!-- ═══════════════ GAME ═══════════════ -->
+<div id="game">
+  <div class="game-header">
+    <div class="header-logo">
+      <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="50" cy="58" r="38" fill="#D21A8A"/>
+        <g transform="translate(50,62)" fill="white">
+          <ellipse rx="12" ry="14"/>
+          <path d="M0,-14 C-2,-20 -7,-24 -4,-27 C-2,-23 0,-18 0,-14Z" fill="white"/>
+          <path d="M0,-14 C2,-20 7,-24 4,-27 C2,-23 0,-18 0,-14Z" fill="white"/>
+        </g>
+        <circle cx="50" cy="58" r="38" fill="none" stroke="#F36E21" stroke-width="3"/>
+      </svg>
+      <span>SAVILE</span>
+    </div>
+    <div class="turn-banner" id="turnBanner">Loading...</div>
+    <div class="timer-display" id="timerDisplay">60</div>
+  </div>
+
+  <div class="scoreboard" id="scoreboard"></div>
+  <div class="card-grid" id="cardGrid"></div>
+</div>
+
+<!-- ═══════════════ WINNER ═══════════════ -->
+<div id="winner">
+  <div class="bg-blob blob1"></div>
+  <div class="bg-blob blob2"></div>
+  <div class="winner-content">
+    <div class="trophy">🏆</div>
+    <p class="winner-title">Game Over · Winner</p>
+    <div class="winner-name" id="winnerName"></div>
+    <div class="winner-sub" id="winnerSub"></div>
+    <div class="final-scores" id="finalScores"></div>
+    <button class="btn-primary" onclick="backToLobby()">Play Again</button>
+  </div>
+</div>
+
+<!-- Flash message -->
+<div class="flash" id="flash"></div>
+
+<script>
+// ═══════════════════════════════════════════════════════
+//  ⚠️  PASTE YOUR FIREBASE CONFIG HERE  ⚠️
+// ═══════════════════════════════════════════════════════
+const firebaseConfig = {
+  apiKey: "AIzaSyALfSPLwjJaSccv19rJ8mUwlUz2bJwUi0s",
+  authDomain: "savile-vet-game.firebaseapp.com",
+  databaseURL: "https://savile-vet-game-default-rtdb.firebaseio.com",
+  projectId: "savile-vet-game",
+  storageBucket: "savile-vet-game.firebasestorage.app",
+  messagingSenderId: "362329177705",
+  appId: "1:362329177705:web:02a491f0e652031ee32cf8"
+};
+// ═══════════════════════════════════════════════════════
+
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+
+// ── VET CARD DATA ──
+const VET_PAIRS = [
+  { term: "Packaging Rules",    def: "Outline the specific number of Core and Elective units to be grouped within a qualification." },
+  { term: "Companion Volume",   def: "A non-endorsed training package component providing information for delivery and assessment implementation." },
+  { term: "Qualifications",     def: "Core and elective units grouped together; successful completion provides vocational outcomes." },
+  { term: "Training Package",   def: "A set of industry-specific nationally endorsed competency standards for expected workplace performance." },
+  { term: "Prerequisites",      def: "Prior attainment of specific unit/s of competency required before commencing a stated unit." },
+  { term: "Entry Requirements", def: "Prior learning or work experience an individual must demonstrate prior to enrolling in a qualification." },
+  { term: "Performance Criteria", def: "Describe in further detail the standards for each essential outcome within a unit of competency." },
+  { term: "Assessment Conditions", def: "Details the environment in which assessment must occur and any specific resources required." },
+  { term: "Knowledge Evidence", def: "Lists everything the student needs to know and understand to be deemed satisfactory for a unit." },
+  { term: "Performance Evidence", def: "Lists everything the student needs to perform to be deemed satisfactory for a unit of competency." }
+];
+
+// ── STATE ──
+let myId = 'player_' + Math.random().toString(36).substr(2, 8);
+let myName = '';
+let roomCode = '';
+let roomRef = null;
+let isHost = false;
+let flippedCards = [];
+let isChecking = false;
+let timerInterval = null;
+let gameState = {};
+
+// ── UTILS ──
+function genCode() {
+  return Math.random().toString(36).substr(2,4).toUpperCase();
+}
+
+function shuffle(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i+1));
+    [a[i],a[j]] = [a[j],a[i]];
+  }
+  return a;
+}
+
+function showFlash(msg, color='#D21A8A') {
+  const el = document.getElementById('flash');
+  el.style.background = color;
+  el.textContent = msg;
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 1800);
+}
+
+function showScreen(id) {
+  ['lobby','waiting','game','winner'].forEach(s => {
+    const el = document.getElementById(s);
+    el.style.display = 'none';
+  });
+  document.getElementById(id).style.display = 'flex';
+}
+
+// ── LOBBY ──
+function createRoom() {
+  myName = document.getElementById('playerName').value.trim();
+  if (!myName) { showFlash('Enter your name!', '#333'); return; }
+  isHost = true;
+  roomCode = genCode();
+  joinOrCreate();
+}
+
+function joinRoom() {
+  myName = document.getElementById('playerName').value.trim();
+  const code = document.getElementById('joinCode').value.trim().toUpperCase();
+  if (!myName) { showFlash('Enter your name!', '#333'); return; }
+  if (!code || code.length !== 4) { showFlash('Enter valid room code!', '#333'); return; }
+  isHost = false;
+  roomCode = code;
+  joinOrCreate();
+}
+
+function joinOrCreate() {
+  roomRef = db.ref('rooms/' + roomCode);
+  roomRef.once('value').then(snap => {
+    const data = snap.val();
+    if (!isHost && !data) { showFlash('Room not found!', '#333'); return; }
+    if (data && data.status === 'playing') { showFlash('Game in progress!', '#333'); return; }
+
+    const player = { name: myName, score: 0, pairs: 0, joinedAt: Date.now() };
+
+    if (isHost) {
+      roomRef.set({
+        host: myId,
+        status: 'waiting',
+        players: { [myId]: player },
+        currentTurn: myId,
+        cards: [],
+        flipped: {},
+        matched: [],
+        timeLeft: 60,
+        timerActive: false
+      });
+    } else {
+      roomRef.child('players').child(myId).set(player);
+    }
+
+    showWaiting();
+  });
+}
+
+function showWaiting() {
+  showScreen('waiting');
+  document.getElementById('displayCode').textContent = roomCode;
+
+  // QR code
+  const url = window.location.href.split('?')[0] + '?room=' + roomCode;
+  document.getElementById('gameUrl').textContent = url;
+  document.getElementById('qrcode').innerHTML = '';
+  try {
+    new QRCode(document.getElementById('qrcode'), {
+      text: url,
+      width: 128,
+      height: 128,
+      colorDark: '#000000',
+      colorLight: '#ffffff',
+      correctLevel: QRCode.CorrectLevel.M
+    });
+  } catch(e) {}
+
+  // Listen for players
+  roomRef.child('players').on('value', snap => {
+    const players = snap.val() || {};
+    const list = document.getElementById('playersList');
+    list.innerHTML = '';
+    Object.entries(players).forEach(([id, p]) => {
+      const chip = document.createElement('div');
+      chip.className = 'player-chip' + (id === Object.keys(players)[0] ? ' host' : '');
+      chip.innerHTML = `<div class="player-dot"></div>${p.name}${id === myId ? ' (you)' : ''}`;
+      list.appendChild(chip);
+    });
+    const count = Object.keys(players).length;
+    document.getElementById('waitStatus').textContent = count < 2
+      ? `Waiting for players... (${count}/2 minimum)`
+      : `${count} player${count>1?'s':''} ready!`;
+
+    if (isHost && count >= 2) {
+      document.getElementById('startBtn').style.display = 'block';
+    }
+  });
+
+  // Listen for game start
+  roomRef.child('status').on('value', snap => {
+    if (snap.val() === 'playing') loadGame();
+  });
+}
+
+// ── START GAME (host only) ──
+function startGame() {
+  const cards = [];
+  VET_PAIRS.forEach((pair, i) => {
+    cards.push({ id: 'T'+i, pairId: i, type: 'term', content: pair.term });
+    cards.push({ id: 'D'+i, pairId: i, type: 'def', content: pair.def });
+  });
+  const shuffled = shuffle(cards);
+
+  // Get first player as current turn
+  roomRef.child('players').once('value').then(snap => {
+    const players = snap.val();
+    const firstPlayer = Object.keys(players)[0];
+    roomRef.update({
+      status: 'playing',
+      cards: shuffled,
+      flipped: {},
+      matched: [],
+      currentTurn: firstPlayer,
+      timeLeft: 60,
+      timerActive: true,
+      turnStart: Date.now()
+    });
+  });
+}
+
+// ── LOAD GAME ──
+function loadGame() {
+  showScreen('game');
+  roomRef.child('players').off();
+
+  roomRef.on('value', snap => {
+    gameState = snap.val();
+    if (!gameState) return;
+    renderGame(gameState);
+  });
+}
+
+function renderGame(state) {
+  if (!state.cards || state.cards.length === 0) return;
+
+  // Check if game over
+  const totalPairs = VET_PAIRS.length;
+  const matchedCount = (state.matched || []).length;
+  if (matchedCount >= totalPairs) {
+    showWinner(state);
+    return;
+  }
+
+  // Scoreboard
+  const sb = document.getElementById('scoreboard');
+  const players = state.players || {};
+  const sortedPlayers = Object.entries(players).sort((a,b) => b[1].pairs - a[1].pairs);
+  sb.innerHTML = sortedPlayers.map(([id, p]) => `
+    <div class="score-card ${id === state.currentTurn ? 'active-player' : ''} ${id === myId ? 'my-card' : ''}">
+      <div class="score-name">${p.name}</div>
+      <div class="score-num">${p.pairs || 0}</div>
+      <div class="score-pairs">pairs</div>
+    </div>
+  `).join('');
+
+  // Turn banner
+  const banner = document.getElementById('turnBanner');
+  const currentName = players[state.currentTurn]?.name || '?';
+  banner.textContent = state.currentTurn === myId ? '🎯 Your Turn!' : `${currentName}'s Turn`;
+
+  // Timer
+  updateTimer(state);
+
+  // Card grid
+  const grid = document.getElementById('cardGrid');
+  const flipped = state.flipped || {};
+  const matched = state.matched || [];
+
+  grid.innerHTML = '';
+  state.cards.forEach(card => {
+    const isFlipped = flipped[card.id];
+    const isMatched = matched.includes(card.pairId);
+    const isMyTurn = state.currentTurn === myId;
+
+    const wrapper = document.createElement('div');
+    wrapper.className = 'card-wrapper' + (isFlipped ? ' flipped' : '') + (isMatched ? ' matched' : '');
+    wrapper.dataset.id = card.id;
+    wrapper.dataset.pairid = card.pairId;
+
+    if (!isFlipped && !isMatched && isMyTurn && !isChecking) {
+      wrapper.onclick = () => flipCard(card.id, card.pairId, state);
+    } else {
+      wrapper.classList.add('locked');
+    }
+
+    const inner = document.createElement('div');
+    inner.className = 'card-inner';
+
+    // Back
+    inner.innerHTML = `
+      <div class="card-face card-back">
+        <div class="card-back-pineapple">
+          <svg viewBox="0 0 50 60" xmlns="http://www.w3.org/2000/svg">
+            <ellipse cx="25" cy="42" rx="13" ry="16" fill="#D21A8A"/>
+            <path d="M25,26 C23,20 17,16 20,12 C23,16 25,22 25,26Z" fill="#D21A8A"/>
+            <path d="M25,26 C27,20 33,16 30,12 C27,16 25,22 25,26Z" fill="#D21A8A"/>
+          </svg>
+        </div>
+        <div class="card-back-label">VET</div>
+      </div>
+    `;
+
+    // Front
+    const front = document.createElement('div');
+    front.className = 'card-face ' + (card.type === 'term' ? 'card-front-term' : 'card-front-def');
+    front.innerHTML = `
+      <span class="card-type-badge ${card.type === 'term' ? 'badge-term' : 'badge-def'}">${card.type === 'term' ? 'TERM' : 'DEF'}</span>
+      <div class="card-text">${card.content}</div>
+    `;
+    inner.appendChild(front);
+    wrapper.appendChild(inner);
+    grid.appendChild(wrapper);
+  });
+}
+
+// ── FLIP CARD ──
+function flipCard(cardId, pairId, state) {
+  if (state.currentTurn !== myId) return;
+  const flipped = state.flipped || {};
+  if (flipped[cardId]) return;
+
+  const alreadyFlipped = Object.keys(flipped);
+  if (alreadyFlipped.length >= 2) return;
+
+  roomRef.child('flipped').child(cardId).set(true);
+
+  const newFlipped = { ...flipped, [cardId]: true };
+  const flippedKeys = Object.keys(newFlipped);
+
+  if (flippedKeys.length === 2) {
+    isChecking = true;
+    const cards = state.cards;
+    const card1 = cards.find(c => c.id === flippedKeys[0]);
+    const card2 = cards.find(c => c.id === flippedKeys[1]);
+
+    if (card1.pairId === card2.pairId && card1.type !== card2.type) {
+      // Match!
+      setTimeout(() => {
+        const newMatched = [...(state.matched || []), card1.pairId];
+        const players = state.players || {};
+        const myPairs = (players[myId]?.pairs || 0) + 1;
+
+        // Next turn = stay (got a match!)
+        roomRef.update({
+          matched: newMatched,
+          flipped: {},
+          [`players/${myId}/pairs`]: myPairs,
+          timeLeft: 60,
+          turnStart: Date.now()
+        });
+        showFlash('Match! +1 pair 🎉', '#F36E21');
+        isChecking = false;
+      }, 900);
+    } else {
+      // No match — flip back, next turn
+      setTimeout(() => {
+        const playerIds = Object.keys(state.players || {});
+        const idx = playerIds.indexOf(state.currentTurn);
+        const nextIdx = (idx + 1) % playerIds.length;
+        const nextTurn = playerIds[nextIdx];
+
+        roomRef.update({
+          flipped: {},
+          currentTurn: nextTurn,
+          timeLeft: 60,
+          turnStart: Date.now()
+        });
+        isChecking = false;
+      }, 1100);
+    }
+  }
+}
+
+// ── TIMER ──
+function updateTimer(state) {
+  const timerEl = document.getElementById('timerDisplay');
+  if (!state.timerActive) { timerEl.textContent = '60'; return; }
+
+  const elapsed = Math.floor((Date.now() - (state.turnStart || Date.now())) / 1000);
+  const left = Math.max(0, 60 - elapsed);
+  timerEl.textContent = left;
+  timerEl.className = 'timer-display' + (left <= 10 ? ' urgent' : '');
+
+  if (left === 0 && state.currentTurn === myId) {
+    // Time's up — advance turn
+    const playerIds = Object.keys(state.players || {});
+    const idx = playerIds.indexOf(state.currentTurn);
+    const nextTurn = playerIds[(idx + 1) % playerIds.length];
+    roomRef.update({ currentTurn: nextTurn, flipped: {}, timeLeft: 60, turnStart: Date.now() });
+    showFlash("Time's up!", '#ff4444');
+  }
+}
+
+// ── WINNER ──
+function showWinner(state) {
+  showScreen('winner');
+  const players = Object.entries(state.players || {}).sort((a,b) => b[1].pairs - a[1].pairs);
+  const [winnerId, winnerData] = players[0];
+
+  document.getElementById('winnerName').textContent = winnerData.name;
+  document.getElementById('winnerSub').textContent = `${winnerData.pairs} pairs matched`;
+
+  const medals = ['🥇','🥈','🥉'];
+  document.getElementById('finalScores').innerHTML = players.map(([id,p], i) => `
+    <div class="final-row">
+      <span class="final-rank">${medals[i] || (i+1)}</span>
+      <span class="final-name">${p.name}${id===myId?' (you)':''}</span>
+      <span class="final-pts">${p.pairs} pairs</span>
+    </div>
+  `).join('');
+}
+
+function backToLobby() {
+  if (roomRef) roomRef.off();
+  showScreen('lobby');
+}
+
+// ── CHECK URL FOR ROOM CODE ──
+window.addEventListener('load', () => {
+  const params = new URLSearchParams(window.location.search);
+  const room = params.get('room');
+  if (room) {
+    document.getElementById('joinCode').value = room.toUpperCase();
+  }
+
+  // Start timer polling
+  setInterval(() => {
+    if (gameState && gameState.status === 'playing') {
+      updateTimer(gameState);
+    }
+  }, 1000);
+});
+</script>
+</body>
+</html>
